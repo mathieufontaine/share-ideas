@@ -1,73 +1,96 @@
 const express = require("express");
 const router = express.Router();
-const ideas = require("../data/ideas");
+const Idea = require("../models/Idea");
 
-router.get("/", (req, res) => {
-  res.json({ success: true, data: ideas });
+// get all ideas
+router.get("/", async (req, res) => {
+  try {
+    const ideas = await Idea.find();
+    res.json({ success: true, data: ideas });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
 });
 
-router.get("/:id", (req, res) => {
-  const idea = ideas.find((idea) => idea.id === parseInt(req.params.id));
-
-  if (!idea) {
-    return res.status(404).json({ success: false, error: "No idea found" });
+// get an idea
+router.get("/:id", async (req, res) => {
+  try {
+    const idea = await Idea.findById(req.params.id);
+    if (!idea) {
+      return res.status(404).json({ success: false, error: "No idea found" });
+    }
+    res.json({ success: true, data: idea });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server Error" });
   }
-
-  res.json({ success: true, data: idea });
 });
 
 // add an idea
-router.post("/", (req, res) => {
-  const { title } = req.body;
+router.post("/", async (req, res) => {
+  const { title, description, tags, status, user } = req.body;
 
-  if (!title) {
+  if (!title || !description || !tags || !status || !user) {
     return res
       .status(400)
-      .json({ success: false, error: "You must provide a title" });
+      .json({ success: false, error: "You must provide all the information" });
   }
 
-  const newIdea = {
-    id: ideas.length + 1,
-    title,
-  };
+  const newIdea = new Idea({
+    titke: title,
+    description: req.body.description,
+    tags: req.body.tags,
+    status: req.body.status,
+    user: req.body.user,
+    date: Date.now(),
+  });
 
-  ideas.push(newIdea);
-  res.status(201).json({ success: true, data: newIdea });
+  try {
+    const savedIdea = await newIdea.save();
+    res.status(201).json({ success: true, data: savedIdea });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err });
+  }
 });
 
 // update an idea
-router.put("/:id", (req, res) => {
-  const { title } = req.body;
+router.put("/:id", async (req, res) => {
+  const { title, description } = req.body;
 
-  if (!title) {
-    return res
-      .status(400)
-      .json({ success: false, error: "You must provide a title" });
+  if (!title || !description) {
+    return res.status(400).json({
+      success: false,
+      error: "You must provide a new title or description",
+    });
   }
 
-  const idea = ideas.find((idea) => idea.id === parseInt(req.params.id));
-
-  if (!idea) {
-    return res.status(404).json({ success: false, error: "No idea found" });
+  try {
+    const updatedIdea = await Idea.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: { title, description },
+      },
+      { new: true }
+    );
+    if (!idea) {
+      return res.status(404).json({ success: false, error: "No idea found" });
+    }
+    res.json({ success: true, data: updatedIdea });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server Error" });
   }
-
-  idea.title = title;
-
-  res.json({ success: true, data: idea });
 });
 
 // delete an idea
-router.delete("/:id", (req, res) => {
-  const idea = ideas.find((idea) => idea.id === parseInt(req.params.id));
-
-  if (!idea) {
-    return res.status(404).json({ success: false, error: "No idea found" });
+router.delete("/:id", async (req, res) => {
+  try {
+    const idea = await Idea.findByIdAndDelete(req.params.id);
+    if (!idea) {
+      return res.status(404).json({ success: false, error: "No idea found" });
+    }
+    res.json({ success: true, data: {} });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server Error" });
   }
-
-  const index = ideas.indexOf(idea);
-  ideas.splice(index, 1);
-
-  res.json({ success: true, data: {} });
 });
 
 module.exports = router;

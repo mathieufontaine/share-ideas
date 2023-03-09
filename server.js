@@ -1,6 +1,11 @@
 const express = require("express");
 const ideaRouter = require("./routes/ideas");
-const port = 3000;
+require("dotenv").config();
+const port = process.env.PORT || 3000;
+const connectDB = require("./config/db");
+
+connectDB();
+
 const app = express();
 
 app.use(express.json());
