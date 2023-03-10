@@ -62,17 +62,23 @@ router.put("/:id", async (req, res) => {
       error: "You must provide a new title or description",
     });
   }
-
   try {
-    const updatedIdea = await Idea.findByIdAndUpdate(
-      req.params.id,
-      {
-        title,
-        description,
-      },
-      { new: true }
-    );
-    res.json({ success: true, data: updatedIdea });
+    const idea = await Idea.findById(req.params.id);
+    if (!idea || idea.user !== req.body.user) {
+      return res
+        .status(403)
+        .json({ success: false, error: "User not authorized to update" });
+    } else {
+      const updatedIdea = await Idea.findByIdAndUpdate(
+        req.params.id,
+        {
+          title,
+          description,
+        },
+        { new: true }
+      );
+      res.json({ success: true, data: updatedIdea });
+    }
   } catch (err) {
     res.status(500).json({ success: false, error: "Server Error" });
   }
@@ -81,8 +87,15 @@ router.put("/:id", async (req, res) => {
 // delete an idea
 router.delete("/:id", async (req, res) => {
   try {
-    await Idea.findByIdAndDelete(req.params.id);
-    res.json({ success: true, data: {} });
+    const idea = await Idea.findById(req.params.id);
+    if (!idea || idea.user !== req.body.user) {
+      return res
+        .status(403)
+        .json({ success: false, error: "User not authorized to delete" });
+    } else {
+      await Idea.findByIdAndDelete(req.params.id);
+      res.json({ success: true, data: {} });
+    }
   } catch (err) {
     res.status(500).json({ success: false, error: "Server Error" });
   }
