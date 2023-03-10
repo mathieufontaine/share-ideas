@@ -36,11 +36,11 @@ router.post("/", async (req, res) => {
   }
 
   const newIdea = new Idea({
-    titke: title,
-    description: req.body.description,
-    tags: req.body.tags,
-    status: req.body.status,
-    user: req.body.user,
+    title,
+    description,
+    tags,
+    status,
+    user,
     date: Date.now(),
   });
 
@@ -67,13 +67,11 @@ router.put("/:id", async (req, res) => {
     const updatedIdea = await Idea.findByIdAndUpdate(
       req.params.id,
       {
-        $set: { title, description },
+        title,
+        description,
       },
       { new: true }
     );
-    if (!idea) {
-      return res.status(404).json({ success: false, error: "No idea found" });
-    }
     res.json({ success: true, data: updatedIdea });
   } catch (err) {
     res.status(500).json({ success: false, error: "Server Error" });
@@ -83,10 +81,7 @@ router.put("/:id", async (req, res) => {
 // delete an idea
 router.delete("/:id", async (req, res) => {
   try {
-    const idea = await Idea.findByIdAndDelete(req.params.id);
-    if (!idea) {
-      return res.status(404).json({ success: false, error: "No idea found" });
-    }
+    await Idea.findByIdAndDelete(req.params.id);
     res.json({ success: true, data: {} });
   } catch (err) {
     res.status(500).json({ success: false, error: "Server Error" });
