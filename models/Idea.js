@@ -26,6 +26,14 @@ const IdeaSchema = new Schema({
     type: Date,
     default: Date.now(),
   },
+  upVotes: {
+    type: Number,
+    default: 0,
+  },
+  downVotes: {
+    type: Number,
+    default: 0,
+  },
 });
 
 module.exports = mongoose.model("Idea", IdeaSchema);

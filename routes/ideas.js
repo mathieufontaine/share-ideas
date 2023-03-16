@@ -42,6 +42,8 @@ router.post("/", async (req, res) => {
     status,
     user,
     date: Date.now(),
+    upVotes: 0,
+    downVotes: 0,
   });
 
   try {
@@ -54,9 +56,9 @@ router.post("/", async (req, res) => {
 
 // update an idea
 router.put("/:id", async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, status } = req.body;
 
-  if (!title || !description) {
+  if (!title || !description || !status) {
     return res.status(400).json({
       success: false,
       error: "You must provide a new title or description",
@@ -74,6 +76,42 @@ router.put("/:id", async (req, res) => {
         {
           title,
           description,
+          status,
+        },
+        { new: true }
+      );
+      res.json({ success: true, data: updatedIdea });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
+// update an idea's votes
+router.put("/:id/votes", async (req, res) => {
+  const { vote } = req.body;
+  if (vote === undefined) {
+    return res.status(400).json({
+      success: false,
+      error: "You must provide a new vote or downVote",
+    });
+  }
+
+  try {
+    const idea = await Idea.findById(req.params.id);
+    if (!idea) {
+      return res.status(404).json({ success: false, error: "Idea not found" });
+    }
+    if (idea.user === req.body.user) {
+      return res
+        .status(403)
+        .json({ success: false, error: "You cannot vote on your own idea" });
+    } else {
+      const updatedIdea = await Idea.findByIdAndUpdate(
+        req.params.id,
+        {
+          upVotes: vote ? idea.upVotes + 1 : idea.upVotes,
+          downVotes: !vote ? idea.downVotes + 1 : idea.downVotes,
         },
         { new: true }
       );

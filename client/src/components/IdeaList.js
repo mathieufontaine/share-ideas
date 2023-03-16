@@ -3,37 +3,8 @@ import IdeasApi from "../services/IdeasApi";
 class IdeaList {
   constructor() {
     this._ideaList = document.querySelector("#idea-list");
-
     this.getIdeas();
-    this._ideas = [
-      {
-        _id: 1,
-        title: "first idea",
-        description: "This is a test",
-        tags: "technology",
-        status: "new",
-        user: "mat",
-        date: "2018-01-01",
-      },
-      {
-        _id: 2,
-        title: "second idea",
-        description: "This is a test 2",
-        tags: "test",
-        status: "new",
-        user: "mat",
-        date: "2020-01-01",
-      },
-      {
-        _id: 3,
-        title: "third idea",
-        description: "This is a test 3",
-        tags: "business",
-        status: "new",
-        user: "mat",
-        date: "2022-01-01",
-      },
-    ];
+    this._ideas = [];
     this._validTags = new Set();
     this._validTags.add("technology");
     this._validTags.add("software");
@@ -44,14 +15,53 @@ class IdeaList {
   }
 
   addEventListeners() {
-    this._ideaList.addEventListener("click", (e) => {
-      console.log(e.target);
-      if (e.target.classList.contains("fa-times")) {
-        e.stopImmediatePropagation();
-        const id = e.target.parentElement.parentElement.dataset.id;
-        this.deleteIdea(id);
-      }
-    });
+    const ideaList = document.querySelectorAll(".card");
+    ideaList.forEach((card) =>
+      card.addEventListener("click", (e) => {
+        const id = e.target.closest(".card").dataset.id;
+        if (e.target.classList.contains("fa-times")) {
+          e.stopImmediatePropagation();
+          this.deleteIdea(id);
+        } else if (e.target.classList.contains("fa-edit")) {
+          e.stopImmediatePropagation();
+          this.editIdea(id);
+        } else if (e.target.classList.contains("fa-thumbs-up")) {
+          e.stopImmediatePropagation();
+          this.updateIdeaVotes(id, true);
+        } else if (e.target.classList.contains("fa-thumbs-down")) {
+          e.stopImmediatePropagation();
+          this.updateIdeaVotes(id, false);
+        }
+      })
+    );
+  }
+
+  getIdea(id) {
+    return this._ideas.find((idea) => idea._id === id);
+  }
+
+  editIdea(id) {
+    const idea = this._ideas.find((idea) => idea._id === id);
+    document.dispatchEvent(new Event("openModal"));
+    document.querySelector("#username").value = idea.user;
+    document.querySelector("#idea-text").value = idea.title;
+    document.querySelector("#idea-description").value = idea.description;
+    document.querySelector("#tag").value = idea.tags;
+    document.querySelector("#status").value = idea.status;
+    document.querySelector("#idea-form").dataset.id = idea._id;
+  }
+
+  async updateIdeaVotes(id, upVote) {
+    const idea = this._ideas.find((idea) => idea._id === id);
+    if (idea.user === localStorage.getItem("username")) {
+      return alert("You cannot vote on your own idea");
+    }
+    try {
+      const res = await IdeasApi.updateIdeaVotes(id, upVote);
+      this.updateIdeaInList(res.data.data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async getIdeas() {
@@ -106,10 +116,32 @@ class IdeaList {
           idea.user === localStorage.getItem("username")
             ? `<button class="delete"><i class="fas fa-times"></i></button>`
             : "";
+        const editBtn =
+          idea.user === localStorage.getItem("username")
+            ? `<button class="edit"><i class="fas fa-edit"></i></button>`
+            : "";
+        const upvoteBtn = `<button class="upvote"><i class="fas fa-thumbs-up"></i></button>`;
+        const downvoteBtn = `<button class="downvote"><i class="fas fa-thumbs-down"></i></button>`;
         return `
       <div class="card" data-id="${idea._id}">
-      ${deleteBtn}
-      <h3>
+      <div class="status status-${idea.status}">${
+          idea.status === "progress" ? "in progress" : idea.status
+        }</div>
+      <div class="actions">
+      ${
+        idea.user !== localStorage.getItem("username")
+          ? `<span class="upVotes">${idea.upVotes}</span>
+            <span class="downVotes">${idea.downVotes}</span>
+            ${upvoteBtn}${downvoteBtn}`
+          : `
+          <span class="upVotes">${idea.upVotes}</span>
+          <span class="downVotes">${idea.downVotes}</span>
+          ${editBtn}${deleteBtn}
+         `
+      }
+      
+      </div>
+      <h3 class="title">
         ${idea.title}
       </h3>
       <p class="description">${idea.description}</p>

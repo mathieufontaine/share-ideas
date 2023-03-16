@@ -21,6 +21,13 @@ class IdeasApi {
     return axios.put(`${this._apiUrl}/${id}`, idea);
   }
 
+  updateIdeaVotes(id, upVote) {
+    return axios.put(`${this._apiUrl}/${id}/votes`, {
+      vote: upVote,
+      user: localStorage.getItem("username"),
+    });
+  }
+
   deleteIdea(id) {
     const user = localStorage.getItem("username") || "";
     return axios.delete(`${this._apiUrl}/${id}`, { data: { user } });

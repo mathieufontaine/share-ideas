@@ -2,12 +2,13 @@ class Modal {
   constructor() {
     this._modal = document.querySelector("#modal");
     this._modalBtn = document.querySelector("#modal-btn");
-    this.addEventListener();
+    this.addEventListeners();
   }
 
-  addEventListener() {
+  addEventListeners() {
     this._modalBtn.addEventListener("click", this.open.bind(this));
-    window.addEventListener("click", this.close.bind(this));
+    window.addEventListener("click", this.outsideClick.bind(this));
+    document.addEventListener("openModal", this.open.bind(this));
     document.addEventListener("closeModal", this.close.bind(this));
   }
 
@@ -15,9 +16,13 @@ class Modal {
     this._modal.classList.add("show-modal");
   }
 
-  close(e) {
-    if (e.target === modal) {
-      this._modal.classList.remove("show-modal");
+  close() {
+    this._modal.classList.remove("show-modal");
+  }
+
+  outsideClick(e) {
+    if (e.target === this._modal) {
+      this.close();
     }
   }
 }

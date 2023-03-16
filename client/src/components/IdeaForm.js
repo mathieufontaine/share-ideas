@@ -1,11 +1,13 @@
 import IdeasApi from "../services/IdeasApi";
 import IdeaList from "./IdeaList";
+import Modal from "./Modal";
 class IdeaForm {
   constructor() {
     this._formModal = document.querySelector("#form-modal");
     this._form = document.querySelector("#idea-form");
     this._modal = document.querySelector("#modal");
     this._ideaList = new IdeaList();
+    this._modal = new Modal();
   }
 
   addEventListeners() {
@@ -29,7 +31,7 @@ class IdeaForm {
       title: this._form.elements.title.value,
       description: this._form.elements.description.value,
       tags: this._form.elements.tag.value,
-      status: "new",
+      status: this._form.elements.status.value || "new",
     };
     if (this._form.dataset.id) {
       this.updateIdea(this._form.dataset.id, idea);
@@ -37,7 +39,6 @@ class IdeaForm {
       this.createIdea(idea);
     }
     localStorage.setItem("username", idea.user);
-    console.log(idea);
     this._form.reset();
     this._form.dataset.id = "";
     this.render();
@@ -56,7 +57,7 @@ class IdeaForm {
   async updateIdea(id, idea) {
     try {
       const res = await IdeasApi.updateIdea(id, idea);
-      this._ideaList.updateIdeaToList(res.data.data);
+      this._ideaList.updateIdeaInList(res.data.data);
     } catch (error) {
       console.error(error);
     }
@@ -84,6 +85,14 @@ class IdeaForm {
         <div class="form-control">
           <label for="tag">Tag</label>
           <input type="text" name="tag" id="tag" />
+        </div>
+        <div class="form-control">
+          <label for="status">Status</label>
+          <select name="status" id="status" value="new">
+            <option value="new">New</option>
+            <option value="progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
         <button class="btn" type="submit" id="submit">Submit</button>
       </form>
